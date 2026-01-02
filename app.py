@@ -12,19 +12,20 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_12345')
 
 # Database Configuration (Πλήρως προστατευμένο για GitHub)
 def get_db_connection():
-    """Establishes a connection using environment variables ONLY."""
     try:
+        # Διαβάζουμε τις τιμές απευθείας από το Render χωρίς τοπικά defaults
         connection = mysql.connector.connect(
-            host=os.environ.get('DB_HOST', 'localhost'),
-            user=os.environ.get('DB_USER', 'root'),
-            password=os.environ.get('DB_PASSWORD', 'default_password'), 
-            database=os.environ.get('DB_NAME', 'BankDB'),
-            port=int(os.environ.get('DB_PORT', 3306)),
-            ssl_disabled=False
+            host=os.environ.get('DB_HOST'),
+            user=os.environ.get('DB_USER'),
+            password=os.environ.get('DB_PASSWORD'),
+            database=os.environ.get('DB_NAME'),
+            port=int(os.environ.get('DB_PORT')),
+            ssl_disabled=False 
         )
         return connection
     except Error as e:
-        print(f"Error connecting to MySQL: {e}")
+        # Αυτό θα εκτυπωθεί στα Logs του Render αν αποτύχει η σύνδεση
+        print(f"Detailed Connection Error: {e}")
         return None
 
 def login_required(view):
