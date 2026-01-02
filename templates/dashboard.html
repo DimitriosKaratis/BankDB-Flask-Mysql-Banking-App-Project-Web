@@ -1,0 +1,342 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="page-header mb-0">Hello, {{ user_name }}</h2>
+        <small class="text-muted">Welcome to your secure banking dashboard.</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('settings') }}" class="btn btn-outline-dark btn-lg shadow-sm">
+            <i class="bi bi-gear-fill"></i> Settings
+        </a>
+        <a href="{{ url_for('transfer') }}" class="btn btn-primary btn-lg shadow-sm">
+            <i class="bi bi-arrow-left-right"></i> Transfer Funds
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card bg-gradient-dark text-white shadow"
+            style="background: linear-gradient(45deg, #0d2b4e, #1a4f8a);">
+            <div class="card-body p-4 text-center">
+                <h5 class="text-white-50 text-uppercase ls-1">Total Net Worth</h5>
+                <h1 class="display-4 fw-bold mb-0">
+                    {{ "%.2f"|format(net_worth) }} <span class="fs-4">EUR/USD</span>
+                </h1>
+                <small class="text-white-50"></small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<ul class="nav nav-tabs nav-fill mb-4" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold text-dark" id="accounts-tab" data-bs-toggle="tab"
+            data-bs-target="#accounts" type="button" role="tab" aria-selected="true"
+            style="color: #000000 !important;">Accounts</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold text-dark" id="cards-tab" data-bs-toggle="tab" data-bs-target="#cards"
+            type="button" role="tab" aria-selected="false" style="color: #000000 !important;">My Cards</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold text-dark" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans"
+            type="button" role="tab" aria-selected="false" style="color: #000000 !important;">Active Loans</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold text-dark" id="transactions-tab" data-bs-toggle="tab"
+            data-bs-target="#transactions" type="button" role="tab" aria-selected="false"
+            style="color: #000000 !important;">Recent Activity</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="dashboardTabsContent">
+
+    <div class="tab-pane fade show active" id="accounts" role="tabpanel" aria-labelledby="accounts-tab">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Account Number</th>
+                                <th>Status</th>
+                                <th>Currency</th>
+                                <th class="text-end pe-4">Current Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if accounts %}
+                            {% for acc in accounts %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="font-monospace">{{ acc.AccountNumber }}</div>
+                                    <small class="text-muted fst-italic">{{ acc.AccountType }}</small>
+                                </td>
+                                <td>
+                                    {% if acc.Status == 'Active' %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% elif acc.Status == 'Closed' %}
+                                    <span class="badge bg-danger">Closed</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ acc.Status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-secondary">{{ acc.Currency }}</span></td>
+                                <td class="text-end pe-4 fw-bold fs-5 
+                                        {% if acc.Balance < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    {{ "%.2f"|format(acc.Balance) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No accounts found.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="cards" role="tabpanel" aria-labelledby="cards-tab">
+        <!-- Card Styles -->
+        <style>
+            .credit-card {
+                width: 100%;
+                aspect-ratio: 1.586;
+                /* Standard ID-1 credit card ratio */
+                border-radius: 16px;
+                padding: 24px;
+                position: relative;
+                color: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s ease;
+            }
+
+            .credit-card:hover {
+                transform: translateY(-5px);
+            }
+
+            .cc-debit {
+                background: linear-gradient(135deg, #0061ff 0%, #60efff 100%);
+            }
+
+            .cc-credit {
+                background: linear-gradient(135deg, #434343 0%, #000000 100%);
+            }
+
+
+
+            .cc-number {
+                font-family: 'Courier New', monospace;
+                font-size: 1.25rem;
+                letter-spacing: 3px;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+                text-align: center;
+                margin: 15px 0;
+                width: 100%;
+            }
+
+            .cc-label {
+                font-family: sans-serif;
+                font-size: 0.65rem;
+                text-transform: uppercase;
+                opacity: 0.8;
+                letter-spacing: 1px;
+                display: block;
+            }
+
+            .cc-value {
+                font-family: 'Courier New', monospace;
+                font-size: 1.0rem;
+                font-weight: bold;
+                letter-spacing: 1px;
+            }
+
+            .cc-bank {
+                font-family: sans-serif;
+                font-weight: 800;
+                font-size: 1.1rem;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            }
+
+            /* Small row below card using existing utilities but ensuring cleanup */
+            .card-stats {
+                margin-top: 15px;
+                padding: 0 10px;
+            }
+        </style>
+
+        <div class="row g-4">
+            <!-- Debit Cards -->
+            <div class="col-12">
+                <h5 class="border-bottom pb-2 fw-bold" style="color: #000000;">Debit Cards</h5>
+            </div>
+            {% for card in debit_cards %}
+            <div class="col-md-6 col-lg-4">
+                <!-- Physical Card Look -->
+                <div class="credit-card cc-debit">
+                    <!-- Top: Bank Name -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="cc-bank">{{ card.CardholderName }}</div>
+                        <div class="text-uppercase fw-bold" style="opacity: 0.7;">Debit</div>
+                    </div>
+
+                    <!-- Middle: Number -->
+                    <div class="d-flex align-items-center justify-content-center flex-grow-1">
+                        <div class="cc-number">{{ card.CardNumber }}</div>
+                    </div>
+
+                    <!-- Bottom: Expiry & CVV -->
+                    <div class="d-flex justify-content-between align-items-end mt-2">
+                        <div>
+                            <span class="cc-label">Valid Thru</span>
+                            <span class="cc-value">{{ card.ExpirationDate }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="cc-label">CVV</span>
+                            <span class="cc-value">{{ card.CVV }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-muted">No active debit cards.</div>
+            {% endfor %}
+
+            <!-- Credit Cards -->
+            <div class="col-12 mt-4">
+                <h5 class="border-bottom pb-2 fw-bold" style="color: #000000;">Credit Cards</h5>
+            </div>
+            {% for card in credit_cards %}
+            <div class="col-md-6 col-lg-4">
+                <!-- Physical Card Look -->
+                <div class="credit-card cc-credit">
+                    <!-- Top: Card Type -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="cc-bank">{{ card.CardholderName }}</div>
+                        <div class="text-uppercase fw-bold" style="opacity: 0.7;">Credit</div>
+                    </div>
+
+                    <!-- Middle: Number -->
+                    <div class="d-flex align-items-center justify-content-center flex-grow-1">
+                        <div class="cc-number">{{ card.CardNumber }}</div>
+                    </div>
+
+                    <!-- Bottom: Expiry & CVV -->
+                    <div class="d-flex justify-content-between align-items-end mt-2">
+                        <div>
+                            <span class="cc-label">Valid Thru</span>
+                            <span class="cc-value">{{ card.ExpirationDate }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="cc-label">CVV</span>
+                            <span class="cc-value">{{ card.CVV }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Balance / Limit Below Card -->
+                <div class="card-stats d-flex justify-content-between align-items-center text-muted">
+                    <small>Limit: <span class="fw-bold text-dark">{{ "%.0f"|format(card.CreditLimit) }}</span></small>
+                    <small>Avail: <span class="fw-bold text-success">{{ "%.0f"|format(card.AvailableBalance)
+                            }}</span></small>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-muted">No active credit cards.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="loans" role="tabpanel" aria-labelledby="loans-tab">
+        <div class="row g-4">
+            {% for loan in loans %}
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100 border-start border-5 border-danger">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="card-title text-danger mb-1">{{ loan.Type }} Loan</h5>
+                                <small class="text-muted">ID: {{ loan.LoanID }}</small>
+                            </div>
+                            <span class="badge bg-danger-subtle text-danger border border-danger p-2">Due: {{
+                                loan.ExpirationDate }}</span>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-6 border-end">
+                                <small class="text-muted d-block">Original Amount</small>
+                                <span class="fw-bold">{{ "%.2f"|format(loan.Amount) }}</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Remaining Debt</small>
+                                <span class="fw-bold text-danger">{{ "%.2f"|format(loan.Debt) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-success">Great! You have no active loans.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if transactions %}
+                    {% for t in transactions %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <div class="mb-1 fw-bold">
+                                    {% if t.Amount < 0 %} <i class="bi bi-arrow-up-right-circle-fill text-danger me-1">
+                                        </i> {{ t.MovementType }}
+                                        {% else %}
+                                        <i class="bi bi-arrow-down-left-circle-fill text-success me-1"></i> {{
+                                        t.MovementType }}
+                                        {% endif %}
+                                </div>
+                                <div class="text-muted small">
+                                    <span>{{ t.Date }} <span class="mx-1">•</span> {{ t.Time }}</span>
+                                    <span class="mx-2">|</span>
+                                    <span>Account: <span class="font-monospace text-dark">{{ t.AccountNumber
+                                            }}</span></span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold {% if t.Amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    {{ "%.2f"|format(t.Amount) }} €
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        No recent transactions.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}

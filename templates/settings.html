@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="page-header mb-0">Profile Settings</h2>
+        <small class="text-muted">Manage your personal information.</small>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+
+        <!-- Identification (Read Only) -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-person-vcard me-2"></i>Identification</h5>
+                <i class="bi bi-lock-fill"></i>
+            </div>
+            <div class="card-body bg-light">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-secondary text-uppercase fs-7">Full Name</label>
+                        <input type="text" class="form-control bg-white font-monospace" value="{{ identity.Name }}"
+                            disabled readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-secondary text-uppercase fs-7">TIN</label>
+                        <input type="text" class="form-control bg-white font-monospace" value="{{ identity.TIN }}"
+                            disabled readonly>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-secondary text-uppercase fs-7 mb-2">Registered Phone Numbers</h6>
+                <div class="bg-white rounded border p-2 mb-2">
+                    {% if phones %}
+                    <ul class="list-unstyled mb-0 m-2">
+                        {% for phone in phones %}
+                        <li class="d-flex align-items-center mb-1">
+                            <i class="bi bi-telephone-fill text-muted me-2"></i>
+                            <span class="font-monospace">{{ phone.Tel }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span class="text-muted fst-italic ms-2">No phone numbers registered.</span>
+                    {% endif %}
+                </div>
+
+                <div class="mt-2 text-danger small">
+                    <i class="bi bi-info-circle-fill"></i> To update these details please visit a physical branch.
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Settings (Single Value) -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white p-3 border-bottom">
+                <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Address</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('settings') }}">
+                    <input type="hidden" name="action" value="update_address">
+                    <div class="mb-3">
+                        <label for="address" class="form-label text-muted">Current Residential Address</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="address" name="address" value="{{ address }}"
+                                required>
+                            <button type="submit" class="btn btn-primary">Update Address</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Email Settings (Multi Value) -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-envelope-fill me-2 text-primary"></i>Email Addresses
+                </h5>
+                <button class="btn btn-sm btn-success rounded-pill px-3" data-bs-toggle="modal"
+                    data-bs-target="#addEmailModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add New
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for email_obj in emails %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-envelope text-muted me-3 fs-5"></i>
+                            <span class="fw-bold">{{ email_obj.Email }}</span>
+                        </div>
+                        <div class="btn-group">
+                            <!-- Edit Button Triggers Modal -->
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#editEmailModal{{ loop.index }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <!-- Delete Form -->
+                            <form method="POST" action="{{ url_for('settings') }}"
+                                onsubmit="return confirm('Are you sure you want to remove this email?');"
+                                class="d-inline">
+                                <input type="hidden" name="action" value="delete_email">
+                                <input type="hidden" name="email_to_delete" value="{{ email_obj.Email }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-end">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+
+                    <!-- Edit Email Modal -->
+                    <div class="modal fade" id="editEmailModal{{ loop.index }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Edit Email</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{{ url_for('settings') }}">
+                                        <input type="hidden" name="action" value="update_email">
+                                        <input type="hidden" name="old_email" value="{{ email_obj.Email }}">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email Address</label>
+                                            <input type="email" class="form-control" name="email"
+                                                value="{{ email_obj.Email }}" required>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <li class="list-group-item p-4 text-center text-muted">
+                        No emails found. Please add one.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Add Email Modal -->
+<div class="modal fade" id="addEmailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('settings') }}">
+                    <input type="hidden" name="action" value="add_email">
+                    <div class="mb-3">
+                        <label class="form-label">New Email Address</label>
+                        <input type="email" class="form-control" name="new_email" placeholder="e.g. name@example.com"
+                            required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">Add Email</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}

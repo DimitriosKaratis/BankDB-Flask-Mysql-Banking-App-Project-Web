@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2 class="page-header">Transfer Funds</h2>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="POST">
+                    <h5 class="card-title mb-4">Transaction Details</h5>
+
+                    <div class="mb-3">
+                        <label for="source_account_id" class="form-label">From Account</label>
+                        <select class="form-select" id="source_account_id" name="source_account_id" required>
+                            <option value="" selected disabled>Select your account</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.AccountID }}">
+                                {{ acc.AccountNumber }} ({{ acc.Currency }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="dest_account_number" class="form-label">To Account Number</label>
+                        <input type="text" class="form-control" id="dest_account_number" name="dest_account_number"
+                            placeholder="GR..." required>
+                        <div class="form-text">Unique IBAN/Account Number of the recipient.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01"
+                                placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">Confirm Transfer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mt-4 mt-lg-0">
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> Instructions</h5>
+            <ul class="mb-0">
+                <li>Ensure you have sufficient balance in the source account.</li>
+                <li>Transfers are processed instantly.</li>
+                <li>Verify the destination account number carefully.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

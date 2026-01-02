@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2 class="page-header">Our Branches</h2>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for branch in branches %}
+    <div class="col">
+        <div class="card h-100 shadow-sm border-0 transition-hover">
+            <div class="card-header bg-white border-bottom-0 pb-0 pt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title text-primary fw-bold mb-0">Branch #{{ branch.BranchID }}</h5>
+                    <span class="badge bg-light text-dark border"><i class="bi bi-clock me-1"></i>{{
+                        branch.OperatingHours }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="small text-muted text-uppercase fw-bold">Address</label>
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-geo-alt-fill text-danger me-2 mt-1"></i>
+                        <span>{{ branch.Address }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="small text-muted text-uppercase fw-bold">Contact Info</label>
+                    {% if branch.Phones %}
+                    <ul class="list-unstyled mb-2">
+                        {% for phone in branch.Phones %}
+                        <li class="mb-1 text-dark"><i class="bi bi-telephone-fill me-2 text-primary"></i>{{ phone }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if branch.Emails %}
+                    <ul class="list-unstyled mb-0">
+                        {% for email in branch.Emails %}
+                        <li class="mb-1"><a href="mailto:{{ email }}" class="text-decoration-none text-dark"><i
+                                    class="bi bi-envelope-fill me-2 text-primary"></i>{{ email }}</a></li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-warning">No branches found in the database.</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

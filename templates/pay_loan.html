@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2 class="page-header">Loan Payment</h2>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="POST">
+                    {% if loan %}
+                    <div class="alert alert-warning">
+                        <strong>Current Debt:</strong> {{ "%.2f"|format(loan.Debt) }} {{ "EUR" }}
+                        <br>
+                        <small>Loan ID: {{ loan.LoanID }} ({{ loan.Type }})</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="source_account_id" class="form-label">Pay From Account</label>
+                        <select class="form-select" id="source_account_id" name="source_account_id" required>
+                            <option value="" selected disabled>Select your account</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.AccountID }}">
+                                {{ acc.AccountNumber }} ({{ acc.Currency }}) - Balance: {{ "%.2f"|format(acc.Balance) }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Payment Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01"
+                                max="{{ loan.Debt }}" placeholder="0.00" required>
+                        </div>
+                        <div class="form-text">Amount must not exceed current debt.</div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg text-white">Confirm Payment</button>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        You do not have any active loans to pay!
+                    </div>
+                    <div class="d-grid">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mt-4 mt-lg-0">
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> Information</h5>
+            <ul class="mb-0">
+                <li>Payments reduce your loan balance immediately.</li>
+                <li>You can only pay off loans associated with your Customer ID.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
