@@ -120,7 +120,7 @@ def transfer():
             dest_number = request.form['dest_account_number']
             amount = float(request.form['amount'])
             
-            conn.start_transaction()
+
             cursor.execute("SELECT AccountID FROM account WHERE AccountNumber = %s", (dest_number,))
             dest_row = cursor.fetchone()
             if not dest_row: raise Exception("Destination account not found.")
@@ -161,7 +161,7 @@ def pay_loan():
         try:
             source_id = request.form['source_account_id']
             amount = float(request.form['amount'])
-            conn.start_transaction()
+
             cursor.execute("SELECT COALESCE(MAX(TransactionID), 0) FROM transaction")
             next_tid = cursor.fetchone()['COALESCE(MAX(TransactionID), 0)'] + 1
             cursor.execute("INSERT INTO transaction (TransactionID, Date, Time, Amount) VALUES (%s, %s, %s, %s)", (next_tid, datetime.datetime.now().date(), datetime.datetime.now().time(), -amount))
@@ -195,7 +195,7 @@ def pay_credit():
         cursor = conn.cursor(dictionary=True)
         try:
             source_id, card_id, amount = request.form['source_account_id'], request.form['card_id'], float(request.form['amount'])
-            conn.start_transaction()
+
             cursor.execute("SELECT COALESCE(MAX(TransactionID), 0) FROM transaction")
             last_tid = cursor.fetchone()['COALESCE(MAX(TransactionID), 0)']
             cursor.execute("INSERT INTO transaction (TransactionID, Date, Time, Amount) VALUES (%s, %s, %s, %s)", (last_tid + 1, datetime.datetime.now().date(), datetime.datetime.now().time(), amount))
