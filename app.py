@@ -224,39 +224,35 @@ def transfer():
 @app.route('/pay_loan', methods=['GET', 'POST'])
 @login_required
 def pay_loan():
-    """Πληρωμή δανείου."""
     conn = get_db_connection()
+    if not conn:
+        flash('Database connection failed.', 'danger')
+        return redirect(url_for('dashboard'))
+    
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM loan_debts WHERE CustomerID = %s AND Debt > 0", (session['user_id'],))
     loan = cursor.fetchone()
     
-    cursor.execute("SELECT ca.AccountID, ca.AccountNumber, ca.Currency, COALESCE(ab.Balance, 0) as Balance FROM customer_accounts ca LEFT JOIN accounts_balance ab ON ca.AccountID = ab.AccountID WHERE ca.CustomerID = %s", (session['user_id'],))
+    query_acc = "SELECT ca.AccountID, ca.AccountNumber, ca.Currency, COALESCE(ab.Balance, 0) as Balance FROM customer_accounts ca LEFT JOIN accounts_balance ab ON ca.AccountID = ab.AccountID WHERE ca.CustomerID = %s"
+    cursor.execute(query_acc, (session['user_id'],))
     accounts = cursor.fetchall()
     
     if request.method == 'POST':
         source_id = request.form['source_account_id']
         try:
             amount = float(request.form['amount'])
-        except ValueError:
-            flash('Invalid amount.', 'warning')
-            return redirect(url_for('pay_loan'))
-        
-        if amount <= 0:
-            flash('Amount must be positive.', 'warning')
-            return redirect(url_for('pay_loan'))
-        
-        if not loan or amount > loan['Debt']:
-            flash('Invalid payment amount.', 'warning')
-            return redirect(url_for('pay_loan'))
+            if amount <= 0 or (loan and amount > loan['Debt']):
+                raise ValueError("Invalid amount.")
             
-        selected_acc = next((a for a in accounts if str(a['AccountID']) == source_id), None)
-        if not selected_acc or selected_acc['Balance'] < amount:
-            flash('Insufficient funds.', 'danger')
-            return redirect(url_for('pay_loan'))
+            selected_acc = next((a for a in accounts if str(a['AccountID']) == source_id), None)
+            if not selected_acc or selected_acc['Balance'] < amount:
+                flash('Insufficient funds.', 'danger')
+                return redirect(url_for('pay_loan'))
 
-        try:
+            # ΑΣΦΑΛΗΣ ΕΝΑΡΞΗ TRANSACTION
             conn.start_transaction()
             now = datetime.datetime.now()
+            
             cursor.execute("SELECT COALESCE(MAX(TransactionID), 0) FROM transaction")
             next_tid = cursor.fetchone()['COALESCE(MAX(TransactionID), 0)'] + 1
             
@@ -266,25 +262,28 @@ def pay_loan():
             conn.commit()
             flash('Loan payment successful!', 'success')
             return redirect(url_for('dashboard'))
-        except Error as e:
-            conn.rollback()
+        except Exception as e:
+            conn.rollback() # Επαναφορά σε περίπτωση αποτυχίας
             flash(f'Payment failed: {e}', 'danger')
-    
-    cursor.close()
-    conn.close()
+        finally:
+            cursor.close()
+            conn.close()
+            
     return render_template('pay_loan.html', loan=loan, accounts=accounts)
 
 @app.route('/pay_credit', methods=['GET', 'POST'])
 @login_required
 def pay_credit():
-    """Πληρωμή πιστωτικής κάρτας (Double Transaction Strategy)."""
     conn = get_db_connection()
+    if not conn:
+        flash('Database connection failed.', 'danger')
+        return redirect(url_for('dashboard'))
+
     cursor = conn.cursor(dictionary=True)
-    
     cursor.execute("SELECT ca.AccountID, ca.AccountNumber, ca.Currency, COALESCE(ab.Balance, 0) as Balance FROM customer_accounts ca LEFT JOIN accounts_balance ab ON ca.AccountID = ab.AccountID WHERE ca.CustomerID = %s", (session['user_id'],))
     accounts = cursor.fetchall()
     
-    cursor.execute("SELECT cc.CardID, c.CardNumber, c.CardholderName, cc.CreditLimit FROM credit_card cc JOIN card c ON cc.CardID = c.CardID LEFT JOIN credit_card_balance ccb ON cc.CardID = ccb.CardID WHERE cc.CustomerID = %s AND c.Status = 'Active' AND (ccb.AvailableBalance < cc.CreditLimit OR ccb.AvailableBalance IS NULL)", (session['user_id'],))
+    cursor.execute("SELECT cc.CardID, c.CardNumber, c.CardholderName, cc.CreditLimit FROM credit_card cc JOIN card c ON cc.CardID = c.CardID LEFT JOIN credit_card_balance ccb ON cc.CardID = ccb.CardID WHERE cc.CustomerID = %s AND c.Status = 'Active'", (session['user_id'],))
     credit_cards = cursor.fetchall()
     
     if request.method == 'POST':
@@ -292,16 +291,12 @@ def pay_credit():
         card_id = request.form['card_id']
         try:
             amount = float(request.form['amount'])
-        except ValueError:
-            flash('Invalid amount.', 'warning')
-            return redirect(url_for('pay_credit'))
+            selected_acc = next((a for a in accounts if str(a['AccountID']) == source_id), None)
+            if not selected_acc or selected_acc['Balance'] < amount:
+                flash('Insufficient funds.', 'danger')
+                return redirect(url_for('pay_credit'))
             
-        selected_acc = next((a for a in accounts if str(a['AccountID']) == source_id), None)
-        if not selected_acc or selected_acc['Balance'] < amount:
-            flash('Insufficient funds.', 'danger')
-            return redirect(url_for('pay_credit'))
-            
-        try:
+            # ΔΙΠΛΟ TRANSACTION STRATEGY (ACID)
             conn.start_transaction()
             now = datetime.datetime.now()
             cursor.execute("SELECT COALESCE(MAX(TransactionID), 0) FROM transaction")
@@ -318,12 +313,13 @@ def pay_credit():
             conn.commit()
             flash('Credit card payment successful!', 'success')
             return redirect(url_for('dashboard'))
-        except Error as e:
+        except Exception as e:
             conn.rollback()
             flash(f'Payment failed: {e}', 'danger')
-
-    cursor.close()
-    conn.close()
+        finally:
+            cursor.close()
+            conn.close()
+            
     return render_template('pay_credit.html', accounts=accounts, credit_cards=credit_cards)
 
 @app.route('/branches')
