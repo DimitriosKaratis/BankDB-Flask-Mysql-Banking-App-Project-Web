@@ -79,7 +79,7 @@ def dashboard():
     if conn:
         cursor = conn.cursor(dictionary=True)
         # 1. Accounts & Net Worth
-        cursor.execute("SELECT ca.*, acc_table.Status, COALESCE(ab.Balance, 0) as Balance, CASE WHEN sa.AccountID IS NOT NULL THEN 'Savings' WHEN cha.AccountID IS NOT NULL THEN 'Checking' ELSE 'General' END as AccountType FROM customer_accounts ca JOIN account acc_table ON ca.AccountID = acc_table.AccountID LEFT JOIN accounts_balance ab ON ca.AccountID = ab.AccountID WHERE ca.CustomerID = %s", (user_id,))
+        cursor.execute("SELECT ca.*, acc_table.Status, COALESCE(ab.Balance, 0) as Balance, CASE WHEN sa.AccountID IS NOT NULL THEN 'Savings' WHEN cha.AccountID IS NOT NULL THEN 'Checking' ELSE 'General' END as AccountType FROM customer_accounts ca JOIN account acc_table ON ca.AccountID = acc_table.AccountID LEFT JOIN accounts_balance ab ON ca.AccountID = ab.AccountID LEFT JOIN savings_account sa ON ca.AccountID = sa.AccountID LEFT JOIN checking_account cha ON ca.AccountID = cha.AccountID WHERE ca.CustomerID = %s", (user_id,))
         accounts = cursor.fetchall()
         for acc in accounts: total_assets += float(acc['Balance'])
 
