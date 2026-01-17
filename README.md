@@ -19,7 +19,7 @@ The application is fully hosted and accessible online:
 ## 💻 User Interface & Features
 
 #### **Application Dashboard**
-![BankDB Dashboard](dashboard.jpg)
+![BankDB Dashboard](dashboard.png)
 
 * **Dashboard:** View real-time net worth and balances for all linked accounts (Savings, Checking, etc.) dynamically calculated via SQL Views.
 * **Secure Login:** Authenticate using a **Customer TIN** (Tax Identification Number).
