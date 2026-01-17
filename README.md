@@ -57,15 +57,22 @@ You can use any of the following credentials (TIN) to explore the application. A
 | **Kostas Vassilakis** | `223344556` | GR1478906789012345678901231 |
 | **Yiannis Papadakis** | `334455667` | GR1990128901234567890123453 |
 
-#### **B. Money Transfer**
-1. Navigate to the **Transfer** tab.
-2. Select your source account.
-3. Enter a recipient's Account Number (e.g. from the table above) and the desired amount.
-4. The system validates the balance and updates both accounts simultaneously.
+#### **B. Dashboard**
+* **Account Overview:** View all accounts linked to your profile.
+* **Live Balances:** Real-time balances are dynamically calculated using specialized SQL Views (`accounts_balance`).
 
-#### **C. Managing Debt**
-* Use the **Pay Loan** section for installment payments.
-* Use **Pay Card** to clear credit card balances; the system will automatically re-adjust your available credit limit.
+#### **C. Money Transfer (Transaction)**
+* **Reliability (ACID):** The system uses `start_transaction()`, `commit()`, and `rollback()` to ensure that no money is ever "lost" during a transfer.
+* **Process:** Choose your source account, enter the recipient's Account Number, and specify the amount.
+
+#### **D. Pay Loan & Credit Card**
+* **Pay Loan:** Monitor your debt in real-time and make payments directly from your accounts.
+* **Pay Credit Card:** Features a **Double Transaction Strategy** to simultaneously update credit limits and deduct the payment amount.
+
+#### **E. Branch Locator & Settings**
+* **Branches:** Access a full directory of all physical bank branch locations.
+* **Settings:** * Update your **Physical Address**.
+    * Manage and add multiple **Email aliases**.
 
 ---
 
