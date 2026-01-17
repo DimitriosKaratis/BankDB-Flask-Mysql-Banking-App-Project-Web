@@ -60,7 +60,7 @@ You can use any of the following credentials (TIN) to explore the application. A
 #### **B. Money Transfer**
 1. Navigate to the **Transfer** tab.
 2. Select your source account.
-3. Enter a recipient's Account Number (e.g., from the table above) and the desired amount.
+3. Enter a recipient's Account Number (e.g. from the table above) and the desired amount.
 4. The system validates the balance and updates both accounts simultaneously.
 
 #### **C. Managing Debt**
